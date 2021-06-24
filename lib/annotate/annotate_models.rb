@@ -637,7 +637,8 @@ module AnnotateModels
       # auto_load/eager_load paths. Try all possible model paths one by one.
       absolute_file = File.expand_path(file)
       model_paths =
-        $LOAD_PATH.select { |path| absolute_file.include?(path) }
+        $LOAD_PATH.map(&:to_s)
+                  .select { |path| absolute_file.include?(path) }
                   .map { |path| absolute_file.sub(path, '').sub(/\.rb$/, '').sub(/^\//, '') }
       model_paths
         .map { |path| get_loaded_model_by_path(path) }
@@ -646,9 +647,7 @@ module AnnotateModels
 
     # Retrieve loaded model class by path to the file where it's supposed to be defined.
     def get_loaded_model_by_path(model_path)
-      klass = ActiveSupport::Inflector.constantize(ActiveSupport::Inflector.camelize(model_path))
-
-      klass if klass.is_a?(Class) && klass < ActiveRecord::Base
+      ActiveSupport::Inflector.constantize(ActiveSupport::Inflector.camelize(model_path))
     rescue StandardError, LoadError
       # Revert to the old way but it is not really robust
       ObjectSpace.each_object(::Class)
